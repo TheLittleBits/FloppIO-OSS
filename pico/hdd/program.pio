@@ -1,0 +1,23 @@
+.program hdd
+
+init:
+    set pins, 0b00
+    pull
+    mov x, osr
+    jmp high_low
+
+high_low:
+    set pins, 0b10
+    jmp x--, high_low
+    set pins, 0b00
+    pull
+    mov x, osr
+    jmp low_high
+
+low_high:
+    set pins, 0b01
+    jmp x--, low_high
+    set pins, 0b00
+    pull
+    mov x, osr
+    jmp high_low

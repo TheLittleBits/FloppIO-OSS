@@ -12,15 +12,15 @@
 #
 # FDD, HDD and scanner music using MIDI Files
 
-print('Loading modules...', end='')
+print('Loading modules... ', end='', flush = True)
 import mido
 import sys
-import driver
+import serial
 from time import sleep
-from MidiEdit import arrange_channels, arrange_drums
-print('DONE')
+from termcolor import cprint
+cprint('DONE', color = 'green', flush = True)
 
-print('''
+cprint('''
   ______ _                  _____ ____  
  |  ____| |                |_   _/ __ \\ 
  | |__  | | ___  _ __  _ __  | || |  | |
@@ -29,66 +29,63 @@ print('''
  |_|    |_|\\___/| .__/| .__/_____\\____/ 
                 | |   | |               
                 |_|   |_|               
-      ''')
+      ''', color = 'blue', flush = True)
 
-ENABLE_EDIT_CHANNELS = False # Whether arrange the midi channels
+port = None
 
-# Load the midi file with Mido
+# Opening the midi file with mido
+print('Loading midi file... ', end = '', flush = True)
+
 try:
-    # Use MidiEdit to get ready the midifile for FloppIO
-    if ENABLE_EDIT_CHANNELS:
-        MidiFile = arrange_channels(arrange_drums(mido.MidiFile(sys.argv[1])))
-    else:
-        MidiFile = arrange_drums(mido.MidiFile(sys.argv[1]))
-
+    MidiFile = mido.MidiFile(sys.argv[1])
 except IndexError:
-    print('Please specify the midi file.')
+    cprint('\n[FATAL] ', color = 'red', end = '', flush = True)
+    print('Please specify the midi file.', flush = True)
     exit()
 except OSError:
-    print('Invalid file format. Probably not a midi file.')
+    cprint('\n[FATAL] ', color = 'red', end = '', flush = True)
+    print('File not found.', flush = True)
     exit()
 
-print('Initialising...', end = '')
-driver.init() # Init the driver
-print('DONE')
+cprint('DONE\n', color = 'green', flush = True)
 
-print('Resetting...', end = '')
-driver.reset() # Init the driver
-print('DONE')
+def cleanup(port):
+    # Send All Notes Off message to all channels
+    if port != None:
+        for i in range(16):
+            port.write(bytes([0b10110000 + i]))
+            port.write(bytes([120]))
+            port.write(bytes([0]))
+            sleep(0.01)
 
-print('Starting up...', end = '')
-driver.startup() # Enable the FDDs and HDDs
-sleep(1)
-print('DONE')
-
-def handle_msg(msg):
-    if msg.type == 'pitchwheel':
-        driver.pitchwheel(msg.channel, msg.pitch) # Set pitchbend for a specific channel
-    if msg.type == 'note_on':
-        if msg.channel == 9:
-            driver.hdd(msg.note, msg.velocity) # Click the HDD
-        else:
-            driver.play(msg.channel, msg.note, msg.velocity) # Play a note with the fdd
-    if msg.type == 'note_off':
-        driver.play(msg.channel, msg.note, 0) # Stop playing a note with the fdd
+def send_msg(port, msg):
+    # Send a message to all picos
+    port.write(bytes(msg.bytes()))
 
 def main():
+    global port
+    # Open the serial port to the three picos
+    port = serial.Serial('/dev/serial0', 31250, bytesize=8, parity='N', stopbits=1)
+
     for msg in MidiFile.play():
-        handle_msg(msg) # Sends the message to the message handler
-    
-    print('\nDone playing file. Goodbye')
-    driver.cleanup() # Disables the gpio pins
+        send_msg(port, msg) # Sends the message to all picos
+
+    print('\nDone playing file. Goodbye', flush = True)
+    cleanup(port)
     exit()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt: # In case of keyboard interruption
-        print("\nInterrupted by user. Closing up.")
-        driver.cleanup() # Disables the gpio pins
+        cprint('Interrupted by user.', color = 'red', flush = True)
+        print('Closing up.', flush = True)
+        cleanup(port) # Sends "All Notes Off" message
         exit()
     except Exception as error: # In case of other errors
-        print("\nAn error occured: {}.\nClosing up.".format(error))
-        driver.cleanup() # Disables the gpio pins
+        cprint('\n[ERROR] ', color = 'red', end = '', flush = True)
+        print(str(error), flush = True)
+        print('Closing up.', flush = True)
+        cleanup(port) # Sends "All Notes Off" message
         exit()

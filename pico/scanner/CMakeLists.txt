@@ -6,23 +6,10 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Initialise pico_sdk from installed location
-# (note this can come from environment, CMake cache etc)
-
-# == DO NOT EDIT THE FOLLOWING LINES for the Raspberry Pi Pico VS Code Extension to work ==
-#set(USERHOME $ENV{HOME})
-#set(sdkVersion 2.1.1)
-#set(toolchainVersion 14_2_Rel1)
-#set(picotoolVersion 2.1.1)
-#set(picoVscode ${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
-#if (EXISTS ${picoVscode})
-#    include(${picoVscode})
-#endif()
-# ====================================================================================
 set(PICO_BOARD pico CACHE STRING "Board type")
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
-include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
+include(pico_sdk_import.cmake)
 
 project(scanner C CXX ASM)
 
@@ -31,10 +18,13 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(scanner scanner.c)
+add_executable(scanner scanner.c lib/endstops.c)
 
 pico_set_program_name(scanner "scanner")
 pico_set_program_version(scanner "0.1")
+
+# no_flash means the target is to run from RAM
+#pico_set_binary_type(scanner no_flash)
 
 # Generate PIO header
 pico_generate_pio_header(scanner ${CMAKE_CURRENT_LIST_DIR}/program.pio)
@@ -45,6 +35,7 @@ pico_enable_stdio_usb(scanner 1)
 
 # Add the standard include files to the build
 target_include_directories(scanner PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}/lib/
         ${CMAKE_CURRENT_LIST_DIR}
 )
 
@@ -52,7 +43,7 @@ target_include_directories(scanner PRIVATE
 target_link_libraries(scanner
         pico_stdlib
         hardware_pio
+        pico_multicore
         )
 
 pico_add_extra_outputs(scanner)
-
