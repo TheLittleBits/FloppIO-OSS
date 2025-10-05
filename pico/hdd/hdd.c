@@ -7,7 +7,7 @@
 #include "hardware/clocks.h"
 
 #define BAUD_RATE 31250
-#define HDD_CLICK_TIME 1000
+#define HDD_CLICK_TIME 100000
 
 // All hdd note definitions
 #define HDD1_NOTE 35
@@ -57,7 +57,7 @@ void init_pio() {
     hdd_program_init(pio1, 1, 12);
     hdd_program_init(pio1, 2, 14);
     hdd_program_init(pio1, 3, 16);
-    // Load the click time into the OSR
+    // Put the click time in each OSR
     pio_sm_put_blocking(pio0, 0, HDD_CLICK_TIME);
     pio_sm_put_blocking(pio0, 1, HDD_CLICK_TIME);
     pio_sm_put_blocking(pio0, 2, HDD_CLICK_TIME);
