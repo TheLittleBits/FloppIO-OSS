@@ -3,5 +3,5 @@ Tests/
 midi/
 3D/
 .vscode
-Floppio.code-workspace
+Floppio-OSS.code-workspace
 __pycache__
