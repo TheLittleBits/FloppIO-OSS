@@ -40,7 +40,7 @@ We need linear non-return movement for high-pitched sounds. Scanners are able to
 		<li>If asked for reboot, answer no</li>
 		<li>Finish</li>
 	</ol>
-  <li>After some setups, a text editor appears. Look in the open file for `dtoverlay=...`. If it's there, edit the value to `disable-bt`. Otherwise, manually add `dtoverlay=disable-bt` to the end of the file. Then look for `enable_uart=...`. Set the value to 1 and if `enable_uart` is not available, add `enable_uart=1` yourself. Press Ctrl-S and Ctrl-X to save and leave the editor.</li>
+  <li>After some setups, a text editor appears. Look in the open file for `dtoverlay=disable-bt`. If it's there, you're fine. Otherwise, manually add `dtoverlay=disable-bt` to the end of the file. Then look for `enable_uart=...`. Set the value to 1 and if `enable_uart` is not available, add `enable_uart=1` yourself at the end. Press Ctrl-S and Ctrl-X to save to leave the editor.</li>
   <li>Your pi will reboot</li>
 </ol>
 
